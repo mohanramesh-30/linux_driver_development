@@ -3,6 +3,8 @@
 MAX_ATTEMPTS=3
 secret_number=0
 attempts=0
+MIN_RANGE=0
+MAX_RANGE=10
 
 # in bash script when it receive '0' that only true state other values consider as a some error or something false
 
@@ -18,7 +20,11 @@ is_yes_no () {
 }
 
 create_secret_number() {
-    echo $((RANDOM % 100 + 1))
+    echo $((RANDOM % $MAX_RANGE + $MIN_RANGE))
+}
+
+range_of_secret_number() {
+    echo "<< Range of secret number ($MIN_RANGE - $MAX_RANGE)>>"
 }
 
 is_secret_number_created() {
@@ -35,17 +41,51 @@ is_secret_number_created() {
     done
 }
 
+clue() {
+
+    local clu clu1 clu2
+    echo "++++++++++++++++++++++++++++++++++++"
+    read -p "Clue ?? (y/n)" clu
+
+    if is_yes_no "$clu"; then
+       
+       while true; do
+
+            clu1=$(create_secret_number)
+
+            if [[ $clu1 -ne $secret_number ]]; then
+                break
+            fi
+       done
+
+        while true; do
+
+            clu2=$(create_secret_number)
+
+            if [[ $clu2 -ne $secret_number && $clu2 -ne $clu1 ]]; then
+                break
+            fi
+       done
+
+       arry_num=($secret_number $clu1 $clu2)
+
+        arry_num=($(shuf -e ${arry_num[@]})) 
+        echo "Find a Number: << ${arry_num[@]} >>"
+    fi
+
+}
+
 # function is asking start a game or not?
 start_game() {
 
     local st_flg=""
     # read from user
+    echo "++++++++++++++++++++++++++++++++++++"
     read -p "Shall We Play? (y/n) " st_flg
-    
     # conditions checking
     if is_yes_no "$st_flg"; then
         
-        echo "Game start !!!!"
+        echo "<< Game start !!! >>"
     else
         echo "See you later, Bye"
         exit 0
@@ -69,16 +109,22 @@ next_game() {
 check_secret_number() {
 
     local user_input=0
-    # echo "Secrert Number is ($secret_number)"
+    echo "Secrert Number is ($secret_number)"
     while true;
     do
         read -p "Enter a secret number attempts: ($attempts) :" user_input
 
         if [[ $1 -eq $user_input ]]; then
+            echo "####################################"
             echo "Super U Got It !!! Secret Number($1)"
+            echo "####################################"
             break
         else
             ((attempts++))
+        fi
+
+        if [[ $attempts == 2 ]]; then
+            clue
         fi
 
         if [[ $attempts == $MAX_ATTEMPTS ]]; then
@@ -98,6 +144,7 @@ main() {
     
     # Game starting
     start_game
+    range_of_secret_number
     while true; do
         # just verification
         is_secret_number_created
